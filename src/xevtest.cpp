@@ -1,5 +1,4 @@
 #include <array>
-#include <iostream>
 #include <map>
 #include <optional>
 #include <stdio.h>
@@ -185,7 +184,7 @@ int main(int argc, char** argv)
     return 0;
   }
   catch (std::exception const& err) {
-    std::cerr << "error: " << err.what() << std::endl;
+    fmt::print(stderr, "error: {}\n", err.what());
   }
 }
 
