@@ -151,6 +151,19 @@ void run(Options& opts)
             xcb_poly_fill_rectangle(conn, window, gc, 1, &rect);
           }
         }
+
+        if (offset == 0)
+        {
+          int constexpr square_size = 1;
+          xcb_change_gc(conn, gc, XCB_GC_FOREGROUND, &colors.back());
+          xcb_rectangle_t rect = {
+            static_cast<int16_t>(ev.event_x - square_size / 2 - 1 + offset * square_size),
+            static_cast<int16_t>(ev.event_y - square_size / 2 - 1),
+            square_size, square_size
+          };
+          xcb_poly_fill_rectangle(conn, window, gc, 1, &rect);
+        }
+
         xcb_flush(conn);
 
         break;
