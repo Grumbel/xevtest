@@ -9,7 +9,11 @@
 #include <xcb/xcb.h>
 #include <X11/keysym.h>
 
-int main()
+struct Options
+{
+};
+
+void run(Options& opts)
 {
   xcb_connection_t* conn = xcb_connect(NULL, NULL);
   xcb_screen_t* screen = xcb_setup_roots_iterator(xcb_get_setup(conn)).data;
@@ -20,12 +24,17 @@ int main()
   win_values [1] = (XCB_EVENT_MASK_EXPOSURE |
                     XCB_EVENT_MASK_POINTER_MOTION |
                     XCB_EVENT_MASK_KEY_PRESS |
+                    XCB_EVENT_MASK_KEY_RELEASE |
                     XCB_EVENT_MASK_BUTTON_PRESS |
                     XCB_EVENT_MASK_BUTTON_RELEASE);
 
   xcb_window_t window = xcb_generate_id(conn);
   xcb_create_window(conn, XCB_COPY_FROM_PARENT, window, screen->root, 0, 0, 256, 256, 0,
                     XCB_WINDOW_CLASS_INPUT_OUTPUT, screen->root_visual, win_mask, win_values);
+
+  std::string window_title = "xmousetest";
+  xcb_change_property(conn, XCB_PROP_MODE_REPLACE, window,
+                      XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, window_title.size(), window_title.data());
 
   xcb_map_window(conn, window);
   xcb_flush(conn);
@@ -79,11 +88,23 @@ int main()
 
     switch (event->response_type & ~0x80)
     {
-      case XCB_KEY_PRESS: {
+      case XCB_KEY_PRESS:
+      case XCB_KEY_RELEASE: {
         auto& ev = reinterpret_cast<xcb_key_press_event_t&>(*event);
-        if (ev.detail == XK_Escape) {
-          quit = true;
+
+        if ((ev.response_type & ~0x80) == XCB_BUTTON_PRESS) {
+          if (ev.detail == XK_Escape) {
+            quit = true;
+          }
         }
+
+        fmt::print(
+          "key-{} code={} x={} y={}\n",
+          (ev.response_type & ~0x80) == XCB_KEY_PRESS ? "press" : "release",
+          ev.detail,
+          ev.event_x,
+          ev.event_y
+          );
         break;
       }
 
@@ -91,19 +112,21 @@ int main()
       case XCB_BUTTON_RELEASE: {
         auto& ev = reinterpret_cast<xcb_button_press_event_t&>(*event);
 
-        button_state[ev.detail] = ((event->response_type & ~0x80) == XCB_BUTTON_PRESS);
+        button_state[ev.detail] = ((ev.response_type & ~0x80) == XCB_BUTTON_PRESS);
 
-        fmt::print("button {}, {} - {} {}\n",
-                   ev.event_x,
-                   ev.event_y,
-                   ev.detail,
-                   (event->response_type & ~0x80) == XCB_BUTTON_PRESS ? "pressed" : "released");
+        fmt::print(
+          "button-{} btn={} x={} y={}\n",
+          (ev.response_type & ~0x80) == XCB_BUTTON_PRESS ? "press" : "release",
+          ev.detail,
+          ev.event_x,
+          ev.event_y
+          );
         break;
       }
 
       case XCB_MOTION_NOTIFY: {
         auto& ev = reinterpret_cast<xcb_motion_notify_event_t&>(*event);
-        fmt::print("motion {}, {}\n", ev.event_x, ev.event_y);
+        fmt::print("motion-notify x={} y={}\n", ev.event_x, ev.event_y);
 
         int offset = 0;
         for (auto const& it : button_state)
@@ -130,5 +153,20 @@ int main()
   }
 
   xcb_disconnect(conn);
-  return 0;
 }
+
+int main(int argc, char** argv)
+{
+  try
+  {
+    Options opts;
+    run(opts);
+    return 0;
+  }
+  catch (std::exception const& err) {
+    std::cerr << "error: " << err.what() << std::endl;
+  }
+}
+
+/* EOF */
+
