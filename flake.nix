@@ -20,9 +20,12 @@
 
             buildInputs = with pkgs; [
               xorg.libxcb
-              xorg.libX11
               extra-cmake-modules
               fmt
+
+              # unused, but necessary to fix warnings issued by cmake
+              xorg.libXau
+              xorg.libXdmcp
             ];
 
             nativeBuildInputs = [

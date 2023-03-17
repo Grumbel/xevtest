@@ -14,7 +14,12 @@ struct Options
 
 void run(Options& opts)
 {
-  xcb_connection_t* conn = xcb_connect(NULL, NULL);
+  xcb_connection_t* conn = xcb_connect(nullptr, nullptr);
+  if (conn == nullptr) {
+    throw std::runtime_error("xcb_connect failed");
+  }
+  std::unique_ptr<xcb_connection_t, decltype(&xcb_disconnect)> conn_uptr{ conn, &xcb_disconnect };
+
   xcb_screen_t* screen = xcb_setup_roots_iterator(xcb_get_setup(conn)).data;
 
   uint32_t win_mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
@@ -72,6 +77,7 @@ void run(Options& opts)
     if (reply == nullptr) {
       throw std::runtime_error("color allocation failure");
     }
+    std::unique_ptr<xcb_alloc_color_reply_t, decltype(&free)> reply_uptr(reply, &free);
 
     colors[i] = reply->pixel;
   }
@@ -84,6 +90,7 @@ void run(Options& opts)
     if (event == nullptr) {
       throw std::runtime_error("xcb_wait_for_event error");
     }
+    std::unique_ptr<xcb_generic_event_t, decltype(&free)> event_uptr(event, &free);
 
     switch (event->response_type & ~0x80)
     {
@@ -148,11 +155,12 @@ void run(Options& opts)
 
         break;
       }
-    }
-    free(event);
-  }
 
-  xcb_disconnect(conn);
+      default:
+        fmt::print("unhandled event\n");
+        break;
+    }
+  }
 }
 
 int main(int argc, char** argv)
