@@ -7,7 +7,6 @@
 
 #include <fmt/format.h>
 #include <xcb/xcb.h>
-#include <X11/keysym.h>
 
 struct Options
 {
@@ -92,12 +91,6 @@ void run(Options& opts)
       case XCB_KEY_RELEASE: {
         auto& ev = reinterpret_cast<xcb_key_press_event_t&>(*event);
 
-        if ((ev.response_type & ~0x80) == XCB_BUTTON_PRESS) {
-          if (ev.detail == XK_Escape) {
-            quit = true;
-          }
-        }
-
         fmt::print(
           "key-{} code={} x={} y={}\n",
           (ev.response_type & ~0x80) == XCB_KEY_PRESS ? "press" : "release",
@@ -105,6 +98,13 @@ void run(Options& opts)
           ev.event_x,
           ev.event_y
           );
+
+        if ((ev.response_type & ~0x80) == XCB_KEY_PRESS) {
+          if (ev.detail == 9 /* Escape */) {
+            fmt::print("escape pressed, exiting...\n");
+            quit = true;
+          }
+        }
         break;
       }
 
