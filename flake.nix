@@ -10,10 +10,10 @@
         pkgs = nixpkgs.legacyPackages.${system};
       in {
         packages = rec {
-          default = xmousetest;
+          default = xevtest;
 
-          xmousetest = pkgs.stdenv.mkDerivation rec {
-            pname = "xmousetest";
+          xevtest = pkgs.stdenv.mkDerivation rec {
+            pname = "xevtest";
             version = "0.0.0";
 
             src = ./.;

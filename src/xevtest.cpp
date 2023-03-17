@@ -36,7 +36,7 @@ void run(Options& opts)
   xcb_create_window(conn, XCB_COPY_FROM_PARENT, window, screen->root, 0, 0, 256, 256, 0,
                     XCB_WINDOW_CLASS_INPUT_OUTPUT, screen->root_visual, win_mask, win_values);
 
-  std::string window_title = "xmousetest";
+  std::string window_title = "xevtest";
   xcb_change_property(conn, XCB_PROP_MODE_REPLACE, window,
                       XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, window_title.size(), window_title.data());
 
@@ -96,7 +96,7 @@ void run(Options& opts)
     {
       case XCB_KEY_PRESS:
       case XCB_KEY_RELEASE: {
-        auto& ev = reinterpret_cast<xcb_key_press_event_t&>(*event);
+        auto const& ev = reinterpret_cast<xcb_key_press_event_t&>(*event);
 
         fmt::print(
           "key-{} code={} x={} y={}\n",
@@ -117,7 +117,7 @@ void run(Options& opts)
 
       case XCB_BUTTON_PRESS:
       case XCB_BUTTON_RELEASE: {
-        auto& ev = reinterpret_cast<xcb_button_press_event_t&>(*event);
+        auto const& ev = reinterpret_cast<xcb_button_press_event_t&>(*event);
 
         button_state[ev.detail] = ((ev.response_type & ~0x80) == XCB_BUTTON_PRESS);
 
@@ -132,7 +132,7 @@ void run(Options& opts)
       }
 
       case XCB_MOTION_NOTIFY: {
-        auto& ev = reinterpret_cast<xcb_motion_notify_event_t&>(*event);
+        auto const& ev = reinterpret_cast<xcb_motion_notify_event_t&>(*event);
         fmt::print("motion-notify x={} y={}\n", ev.event_x, ev.event_y);
 
         int offset = 0;
