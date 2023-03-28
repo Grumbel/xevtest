@@ -11,6 +11,43 @@ struct Options
 {
 };
 
+class EventPrinter
+{
+public:
+  void print(xcb_key_press_event_t const& ev) {
+    fmt::print(
+      "key-{:<11}  x={:<6}  y={:<6}  state={:<016b}  keycode={:<6}\n",
+      (ev.response_type & ~0x80) == XCB_KEY_PRESS ? "press" : "release",
+      ev.event_x,
+      ev.event_y,
+      ev.state,
+      ev.detail
+      );
+  }
+
+  void print(xcb_button_press_event_t const& ev) {
+    fmt::print(
+      "button-{:<8}  x={:<6}  y={:<6}  state={:<016b}  button={:<6}\n",
+      (ev.response_type & ~0x80) == XCB_BUTTON_PRESS ? "press" : "release",
+      ev.event_x,
+      ev.event_y,
+      ev.state,
+      ev.detail
+      );
+  }
+
+  void print(xcb_motion_notify_event_t const& ev) {
+    fmt::print("motion-notify    x={:<6}  y={:<6}  state={:<016b}\n",
+               ev.event_x,
+               ev.event_y,
+               ev.state);
+  }
+
+  void print(xcb_generic_event_t const& ev) {
+    fmt::print("unhandled {}\n", ev.response_type);
+  }
+};
+
 void run(Options& opts)
 {
   xcb_connection_t* conn = xcb_connect(nullptr, nullptr);
@@ -81,6 +118,7 @@ void run(Options& opts)
     colors[i] = reply->pixel;
   }
 
+  EventPrinter evprinter;
   std::map<xcb_button_t, bool> button_state;
   bool quit = false;
   while (!quit)
@@ -96,15 +134,7 @@ void run(Options& opts)
       case XCB_KEY_PRESS:
       case XCB_KEY_RELEASE: {
         auto const& ev = reinterpret_cast<xcb_key_press_event_t&>(*event);
-
-        fmt::print(
-          "key-{} code={} x={} y={}\n",
-          (ev.response_type & ~0x80) == XCB_KEY_PRESS ? "press" : "release",
-          ev.detail,
-          ev.event_x,
-          ev.event_y
-          );
-
+        evprinter.print(ev);
         if ((ev.response_type & ~0x80) == XCB_KEY_PRESS) {
           if (ev.detail == 9 /* Escape */) {
             fmt::print("escape pressed, exiting...\n");
@@ -117,22 +147,14 @@ void run(Options& opts)
       case XCB_BUTTON_PRESS:
       case XCB_BUTTON_RELEASE: {
         auto const& ev = reinterpret_cast<xcb_button_press_event_t&>(*event);
-
+        evprinter.print(ev);
         button_state[ev.detail] = ((ev.response_type & ~0x80) == XCB_BUTTON_PRESS);
-
-        fmt::print(
-          "button-{} btn={} x={} y={}\n",
-          (ev.response_type & ~0x80) == XCB_BUTTON_PRESS ? "press" : "release",
-          ev.detail,
-          ev.event_x,
-          ev.event_y
-          );
         break;
       }
 
       case XCB_MOTION_NOTIFY: {
         auto const& ev = reinterpret_cast<xcb_motion_notify_event_t&>(*event);
-        fmt::print("motion-notify x={} y={}\n", ev.event_x, ev.event_y);
+        evprinter.print(ev);
 
         int offset = 0;
         for (auto const& it : button_state)
@@ -169,7 +191,7 @@ void run(Options& opts)
       }
 
       default:
-        fmt::print("unhandled event\n");
+        evprinter.print(*event);
         break;
     }
   }
