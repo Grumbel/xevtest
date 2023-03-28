@@ -54,8 +54,25 @@ public:
     fflush(m_fout);
   }
 
+  void print(xcb_expose_event_t const& ev) {
+    fmt::print(m_fout, "expose\n");
+  }
+
+  void print(xcb_mapping_notify_event_t const& ev) {
+    fmt::print(m_fout, "mapping-notify   request={} first_keycode={} count={}\n",
+               ev.request,
+               ev.first_keycode,
+               ev.count);
+    fflush(m_fout);
+  }
+
   void print(xcb_generic_event_t const& ev) {
     fmt::print(m_fout, "unhandled {}\n", ev.response_type);
+    fflush(m_fout);
+  }
+
+  void print(std::string_view text) {
+    fmt::print(m_fout, "{}\n", text);
     fflush(m_fout);
   }
 
@@ -146,6 +163,18 @@ void run(Options& opts)
 
     switch (event->response_type & ~0x80)
     {
+      case XCB_EXPOSE: {
+        auto const& ev = reinterpret_cast<xcb_expose_event_t&>(*event);
+        evprinter.print(ev);
+        break;
+      }
+
+      case XCB_MAPPING_NOTIFY: {
+        auto const& ev = reinterpret_cast<xcb_mapping_notify_event_t&>(*event);
+        evprinter.print(ev);
+        break;
+      }
+
       case XCB_KEY_PRESS:
       case XCB_KEY_RELEASE: {
         auto const& ev = reinterpret_cast<xcb_key_press_event_t&>(*event);
