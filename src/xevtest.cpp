@@ -14,8 +14,13 @@ struct Options
 class EventPrinter
 {
 public:
+  EventPrinter(FILE* fout) :
+    m_fout(fout)
+  {}
+
   void print(xcb_key_press_event_t const& ev) {
     fmt::print(
+      m_fout,
       "key-{:<11}  x={:<6}  y={:<6}  state={:<016b}  keycode={:<6}\n",
       (ev.response_type & ~0x80) == XCB_KEY_PRESS ? "press" : "release",
       ev.event_x,
@@ -23,10 +28,12 @@ public:
       ev.state,
       ev.detail
       );
+    fflush(m_fout);
   }
 
   void print(xcb_button_press_event_t const& ev) {
     fmt::print(
+      m_fout,
       "button-{:<8}  x={:<6}  y={:<6}  state={:<016b}  button={:<6}\n",
       (ev.response_type & ~0x80) == XCB_BUTTON_PRESS ? "press" : "release",
       ev.event_x,
@@ -34,18 +41,26 @@ public:
       ev.state,
       ev.detail
       );
+    fflush(m_fout);
   }
 
   void print(xcb_motion_notify_event_t const& ev) {
-    fmt::print("motion-notify    x={:<6}  y={:<6}  state={:<016b}\n",
-               ev.event_x,
-               ev.event_y,
-               ev.state);
+    fmt::print(
+      m_fout,
+      "motion-notify    x={:<6}  y={:<6}  state={:<016b}\n",
+      ev.event_x,
+      ev.event_y,
+      ev.state);
+    fflush(m_fout);
   }
 
   void print(xcb_generic_event_t const& ev) {
-    fmt::print("unhandled {}\n", ev.response_type);
+    fmt::print(m_fout, "unhandled {}\n", ev.response_type);
+    fflush(m_fout);
   }
+
+private:
+  FILE* m_fout;
 };
 
 void run(Options& opts)
@@ -118,7 +133,7 @@ void run(Options& opts)
     colors[i] = reply->pixel;
   }
 
-  EventPrinter evprinter;
+  EventPrinter evprinter(stdout);
   std::map<xcb_button_t, bool> button_state;
   bool quit = false;
   while (!quit)
