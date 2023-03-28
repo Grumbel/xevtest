@@ -12,7 +12,7 @@
         packages = rec {
           default = xevtest;
 
-          xevtest = pkgs.stdenv.mkDerivation rec {
+          xevtest = pkgs.gcc12Stdenv.mkDerivation rec {
             pname = "xevtest";
             version = "0.0.0";
 
