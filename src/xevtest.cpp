@@ -177,7 +177,7 @@ void run(Options& opts)
           if (it.second) {
             offset += 1;
 
-            int constexpr square_size = 5;
+            constexpr int square_size = 5;
             xcb_change_gc(conn, gc, XCB_GC_FOREGROUND, &colors[(it.first - 1) % colors.size()]);
             xcb_rectangle_t rect = {
               static_cast<int16_t>(ev.event_x - square_size / 2 - 1 + offset * square_size),
@@ -190,7 +190,7 @@ void run(Options& opts)
 
         if (offset == 0)
         {
-          int constexpr square_size = 1;
+          constexpr int square_size = 1;
           xcb_change_gc(conn, gc, XCB_GC_FOREGROUND, &colors.back());
           xcb_rectangle_t rect = {
             static_cast<int16_t>(ev.event_x - square_size / 2 - 1 + offset * square_size),
