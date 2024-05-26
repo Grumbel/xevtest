@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.11";
+    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-24.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -12,7 +12,7 @@
         packages = rec {
           default = xevtest;
 
-          xevtest = pkgs.gcc12Stdenv.mkDerivation rec {
+          xevtest = pkgs.stdenv.mkDerivation rec {
             pname = "xevtest";
             version = "0.0.0";
 
@@ -28,8 +28,8 @@
               xorg.libXdmcp
             ];
 
-            nativeBuildInputs = [
-              pkgs.cmake
+            nativeBuildInputs = with pkgs; [
+              cmake
             ];
           };
         };
