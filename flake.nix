@@ -14,23 +14,21 @@
 
           xevtest = pkgs.stdenv.mkDerivation rec {
             pname = "xevtest";
-            version = "0.0.0";
+            version = "0.1.0";
 
             src = ./.;
 
             buildInputs = with pkgs; [
-              xorg.libxcb
-              extra-cmake-modules
-              fmt
+              libxcb
 
               # unused, but necessary to fix warnings issued by cmake
-              xorg.libXau
-              xorg.libXdmcp
+              libxau
+              libxdmcp
             ];
 
             nativeBuildInputs = with pkgs; [
+              pkg-config
               cmake
-              extra-cmake-modules
             ];
           };
         };
